@@ -1,0 +1,39 @@
+bot_name: "CustomerSupportBot"
+version: "1.0.0"
+environment: "production"
+
+llm:
+  provider: "openai"
+  model: "gpt-4"
+  temperature: 0.5
+  max_tokens: 1500
+  api_key_env: "OPENAI_API_KEY"
+
+conversation:
+  max_context_length: 15
+  context_window_tokens: 8000
+  enable_memory: true
+  greeting_enabled: true
+  fallback_enabled: true
+
+prompts:
+  chain_of_thought_enabled: true
+  reasoning_prefix: "Let me analyze this request:"
+  confidence_threshold: 0.8
+  include_examples: true
+
+logging:
+  level: "WARNING"
+  file_path: "/var/log/chatbot/production.log"
+  log_conversations: false
+
+security:
+  enable_content_filter: true
+  max_input_length: 1500
+  rate_limit_requests: 50
+  rate_limit_window: 3600
+  blocked_patterns:
+    - "spam"
+    - "abuse"
+    - "harmful"
+    - "inappropriate"

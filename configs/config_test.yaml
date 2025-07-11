@@ -1,0 +1,28 @@
+bot_name: "TestBot"
+version: "1.0.0"
+environment: "test"
+
+llm:
+  provider: "openai"
+  model: "gpt-3.5-turbo"
+  temperature: 0.0
+  max_tokens: 500
+  api_key_env: "OPENAI_API_KEY_TEST"
+
+conversation:
+  max_context_length: 5
+  enable_memory: false
+  greeting_enabled: false
+
+prompts:
+  chain_of_thought_enabled: false
+  include_examples: false
+
+logging:
+  level: "DEBUG"
+  file_path: "logs/test.log"
+  log_conversations: true
+
+security:
+  enable_content_filter: false
+  max_input_length: 5000
