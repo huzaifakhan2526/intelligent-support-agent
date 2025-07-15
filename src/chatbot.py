@@ -108,15 +108,30 @@ class BotConfig:
     security: SecurityConfig = None
     
     def __post_init__(self):
-        if self.llm is None:
+        # Convert nested dictionaries to proper dataclass objects
+        if isinstance(self.llm, dict):
+            self.llm = LLMConfig(**self.llm)
+        elif self.llm is None:
             self.llm = LLMConfig()
-        if self.conversation is None:
+            
+        if isinstance(self.conversation, dict):
+            self.conversation = ConversationConfig(**self.conversation)
+        elif self.conversation is None:
             self.conversation = ConversationConfig()
-        if self.prompts is None:
+            
+        if isinstance(self.prompts, dict):
+            self.prompts = PromptConfig(**self.prompts)
+        elif self.prompts is None:
             self.prompts = PromptConfig()
-        if self.logging is None:
+            
+        if isinstance(self.logging, dict):
+            self.logging = LoggingConfig(**self.logging)
+        elif self.logging is None:
             self.logging = LoggingConfig()
-        if self.security is None:
+            
+        if isinstance(self.security, dict):
+            self.security = SecurityConfig(**self.security)
+        elif self.security is None:
             self.security = SecurityConfig()
 
 # ============================================================================
