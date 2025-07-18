@@ -45,8 +45,14 @@ setup: ## Initial project setup
    @echo "  venv\\Scripts\\activate     (Windows)"
    @echo "Then run: make install-dev"
 
-run: ## Run the chatbot
+run: ## Run the chatbot (command line)
    python src/chatbot.py
+
+run-ws: ## Run the WebSocket server
+   python src/websocket_server.py
+
+run-web: ## Run the web interface with HTTP server
+   python src/http_server.py
 
 run-prod: ## Run with production config
    python src/chatbot.py --config configs/config_production.yaml

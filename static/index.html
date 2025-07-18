@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent Support Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 800px;
+            height: 80vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .connection-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ff4757;
+            transition: background 0.3s ease;
+        }
+
+        .status-indicator.connected {
+            background: #2ed573;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 16px;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .message.bot .message-avatar {
+            background: linear-gradient(135deg, #2ed573 0%, #1e90ff 100%);
+        }
+
+        .message.system .message-avatar {
+            background: linear-gradient(135deg, #ffa502 0%, #ff6348 100%);
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e9ecef;
+            border-bottom-left-radius: 4px;
+            line-height: 1.6;
+        }
+
+        .message.bot .message-content strong {
+            color: #667eea;
+        }
+
+        .message.bot .message-content h2, 
+        .message.bot .message-content h3, 
+        .message.bot .message-content h4 {
+            margin: 15px 0 8px 0;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .message.bot .message-content h2 {
+            font-size: 18px;
+        }
+
+        .message.bot .message-content h3 {
+            font-size: 16px;
+        }
+
+        .message.bot .message-content h4 {
+            font-size: 14px;
+        }
+
+        .message.bot .message-content pre {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            border: 1px solid #e9ecef;
+        }
+
+        .message.bot .message-content code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            border: 1px solid #e9ecef;
+        }
+
+        .message.bot .message-content a {
+            color: #667eea;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-bottom-color 0.3s ease;
+        }
+
+        .message.bot .message-content a:hover {
+            border-bottom-color: #667eea;
+        }
+
+        .message.bot .message-content div {
+            margin: 4px 0;
+        }
+
+        .message.bot .message-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 14px;
+        }
+
+        .message.bot .message-content table th {
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+            border: 1px solid #5a6fd8;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .message.bot .message-content table td {
+            padding: 10px 12px;
+            border: 1px solid #e9ecef;
+            text-align: left;
+            vertical-align: top;
+            line-height: 1.4;
+        }
+
+        .message.bot .message-content table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .message.bot .message-content table tr:hover {
+            background-color: #f1f3f4;
+        }
+
+        .message.system .message-content {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            font-style: italic;
+        }
+
+        .message.error .message-content {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .typing-indicator.show {
+            display: flex;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s ease;
+            resize: none;
+            min-height: 50px;
+            max-height: 120px;
+        }
+
+        .message-input:focus {
+            border-color: #667eea;
+        }
+
+        .send-button {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+            min-width: 80px;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .command-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .command-button {
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .command-button:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .timestamp {
+            font-size: 11px;
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+
+        .scroll-to-bottom {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .scroll-to-bottom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                width: 95%;
+                height: 90vh;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="connection-status">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span id="statusText">Connecting...</span>
+            </div>
+            <h1 id="botName">Intelligent Support Agent</h1>
+            <p id="botVersion">Connecting to chatbot...</p>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will be added here -->
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="message-avatar">🤖</div>
+            <div class="typing-dots">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <div class="input-container">
+                <textarea 
+                    id="messageInput" 
+                    class="message-input" 
+                    placeholder="Type your message here..."
+                    rows="1"
+                ></textarea>
+                <button id="sendButton" class="send-button">Send</button>
+            </div>
+            <div class="command-buttons">
+                <button class="command-button" onclick="sendCommand('stats')">📊 Stats</button>
+                <button class="command-button" onclick="sendCommand('clear')">🗑️ Clear</button>
+                <button class="command-button" onclick="sendCommand('history')">📜 History</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="scroll-to-bottom" id="scrollButton" onclick="scrollToBottom()">↓</button>
+
+    <script>
+        class ChatbotClient {
+            constructor() {
+                this.ws = null;
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 5;
+                this.reconnectDelay = 1000;
+                this.userId = null;
+                this.sessionId = 'web_session';
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.connect();
+            }
+
+            initializeElements() {
+                this.chatMessages = document.getElementById('chatMessages');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.statusIndicator = document.getElementById('statusIndicator');
+                this.statusText = document.getElementById('statusText');
+                this.typingIndicator = document.getElementById('typingIndicator');
+                this.scrollButton = document.getElementById('scrollButton');
+                this.botName = document.getElementById('botName');
+                this.botVersion = document.getElementById('botVersion');
+            }
+
+            bindEvents() {
+                this.sendButton.addEventListener('click', () => this.sendMessage());
+                this.messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                this.messageInput.addEventListener('input', () => {
+                    this.messageInput.style.height = 'auto';
+                    this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
+                });
+
+                this.chatMessages.addEventListener('scroll', () => {
+                    this.updateScrollButton();
+                });
+            }
+
+            connect() {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const host = window.location.hostname;
+                const port = '8765';
+                const wsUrl = `${protocol}//${host}:${port}`;
+
+                this.ws = new WebSocket(wsUrl);
+                this.updateStatus('Connecting...', false);
+
+                this.ws.onopen = () => {
+                    this.updateStatus('Online', true);
+                    this.reconnectAttempts = 0;
+                    console.log('WebSocket connected');
+                };
+
+                this.ws.onmessage = (event) => {
+                    this.handleMessage(JSON.parse(event.data));
+                };
+
+                this.ws.onclose = () => {
+                    this.updateStatus('Disconnected', false);
+                    console.log('WebSocket disconnected');
+                    this.attemptReconnect();
+                };
+
+                this.ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    this.updateStatus('Error', false);
+                };
+            }
+
+            attemptReconnect() {
+                if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                    this.reconnectAttempts++;
+                    this.updateStatus(`Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`, false);
+                    
+                    setTimeout(() => {
+                        this.connect();
+                    }, this.reconnectDelay * this.reconnectAttempts);
+                } else {
+                    this.updateStatus('Connection failed', false);
+                    this.addSystemMessage('Failed to connect to server. Please refresh the page.');
+                }
+            }
+
+            updateStatus(text, connected) {
+                this.statusText.textContent = text;
+                this.statusIndicator.className = 'status-indicator' + (connected ? ' connected' : '');
+            }
+
+            handleMessage(data) {
+                switch (data.type) {
+                    case 'system':
+                        this.addSystemMessage(data.message);
+                        if (data.user_id) {
+                            this.userId = data.user_id;
+                        }
+                        // Update bot version/subtitle if available
+                        if (data.bot_name && data.version) {
+                            this.botVersion.textContent = `${data.bot_name} v${data.version}`;
+                        } else if (data.bot_name) {
+                            this.botVersion.textContent = data.bot_name;
+                        } else if (data.version) {
+                            this.botVersion.textContent = `v${data.version}`;
+                        } else {
+                            this.botVersion.textContent = "Online";
+                        }
+                        break;
+                    case 'chat':
+                        if (data.user_id === 'bot') {
+                            this.hideTypingIndicator();
+                            this.addBotMessage(data.message, data.timestamp);
+                        } else {
+                            this.addUserMessage(data.message, data.timestamp);
+                        }
+                        break;
+                    case 'typing':
+                        this.showTypingIndicator();
+                        break;
+                    case 'error':
+                        this.addErrorMessage(data.message);
+                        break;
+                    case 'history':
+                        this.displayHistory(data.messages);
+                        break;
+                }
+            }
+
+            sendMessage() {
+                const message = this.messageInput.value.trim();
+                if (!message || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
+                    return;
+                }
+
+                const data = {
+                    type: 'chat',
+                    message: message,
+                    session_id: this.sessionId
+                };
+
+                this.ws.send(JSON.stringify(data));
+                this.messageInput.value = '';
+                this.messageInput.style.height = 'auto';
+            }
+
+            sendCommand(command) {
+                if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+                    return;
+                }
+
+                const data = {
+                    type: 'command',
+                    message: command,
+                    session_id: this.sessionId
+                };
+
+                this.ws.send(JSON.stringify(data));
+            }
+
+            addUserMessage(message, timestamp) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message user';
+                messageDiv.innerHTML = `
+                    <div class="message-content">
+                        ${this.escapeHtml(message)}
+                        <div class="timestamp">${this.formatTimestamp(timestamp)}</div>
+                    </div>
+                    <div class="message-avatar">👤</div>
+                `;
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+
+            addBotMessage(message, timestamp) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message bot';
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content">
+                        ${this.formatBotMessage(message)}
+                        <div class="timestamp">${this.formatTimestamp(timestamp)}</div>
+                    </div>
+                `;
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+
+            addSystemMessage(message) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message system';
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">ℹ️</div>
+                    <div class="message-content">
+                        ${this.escapeHtml(message)}
+                    </div>
+                `;
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+
+            addErrorMessage(message) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message error';
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">⚠️</div>
+                    <div class="message-content">
+                        ${this.escapeHtml(message)}
+                    </div>
+                `;
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+
+            showTypingIndicator() {
+                this.typingIndicator.classList.add('show');
+                this.scrollToBottom();
+            }
+
+            hideTypingIndicator() {
+                this.typingIndicator.classList.remove('show');
+            }
+
+            displayHistory(messages) {
+                this.chatMessages.innerHTML = '';
+                messages.forEach(msg => {
+                    if (msg.role === 'user') {
+                        this.addUserMessage(msg.content, msg.timestamp);
+                    } else if (msg.role === 'assistant') {
+                        this.addBotMessage(msg.content, msg.timestamp);
+                    }
+                });
+            }
+
+            formatBotMessage(message) {
+                // Enhanced markdown-style formatting
+                let formatted = this.escapeHtml(message);
+                
+                // Chain-of-thought reasoning header
+                formatted = formatted.replace(/(Let me think about this step by step:)/g, '<strong style="color: #667eea;">$1</strong>');
+                
+                // Bold text (**text** or __text__) - but not inside code blocks
+                formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                formatted = formatted.replace(/__(.*?)__/g, '<strong>$1</strong>');
+                
+                // Italic text (*text* or _text_) - but not inside code blocks
+                formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                formatted = formatted.replace(/_(.*?)_/g, '<em>$1</em>');
+                
+                // Numbered lists (1. item) - improved regex
+                formatted = formatted.replace(/^(\d+\.\s+)(.*)$/gm, '<div style="margin: 8px 0; padding-left: 10px;"><strong style="color: #667eea;">$1</strong>$2</div>');
+                
+                // Bullet points (- item or * item) - improved regex
+                formatted = formatted.replace(/^[-*]\s+(.*)$/gm, '<div style="margin: 8px 0; padding-left: 10px;">• $1</div>');
+                
+                // Headers (# Header)
+                formatted = formatted.replace(/^###\s+(.*)$/gm, '<h4 style="margin: 15px 0 8px 0; color: #667eea; font-weight: 600;">$1</h4>');
+                formatted = formatted.replace(/^##\s+(.*)$/gm, '<h3 style="margin: 18px 0 10px 0; color: #667eea; font-weight: 600;">$1</h3>');
+                formatted = formatted.replace(/^#\s+(.*)$/gm, '<h2 style="margin: 20px 0 12px 0; color: #667eea; font-weight: 600;">$1</h2>');
+                
+                // Code blocks (```code```)
+                formatted = formatted.replace(/```(.*?)```/gs, '<pre style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin: 12px 0; overflow-x: auto; font-family: monospace; border: 1px solid #e9ecef;">$1</pre>');
+                
+                // Inline code (`code`)
+                formatted = formatted.replace(/`(.*?)`/g, '<code style="background: #f8f9fa; padding: 2px 6px; border-radius: 4px; font-family: monospace; border: 1px solid #e9ecef;">$1</code>');
+                
+                // Links [text](url)
+                formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #667eea; text-decoration: none; border-bottom: 1px solid transparent; transition: border-bottom-color 0.3s ease;">$1</a>');
+                
+                // Tables (| column1 | column2 |)
+                formatted = formatted.replace(/\|(.+)\|/g, function(match) {
+                    const cells = match.split('|').slice(1, -1); // Remove empty first and last elements
+                    const cellHtml = cells.map(cell => 
+                        `<td style="padding: 8px 12px; border: 1px solid #e9ecef; text-align: left; vertical-align: top;">${cell.trim()}</td>`
+                    ).join('');
+                    return `<tr>${cellHtml}</tr>`;
+                });
+                
+                // Wrap consecutive table rows in table tags
+                formatted = formatted.replace(/(<tr>.*?<\/tr>)/gs, function(match) {
+                    // Check if this is already wrapped in a table
+                    if (match.includes('<table')) return match;
+                    
+                    // Split into individual rows
+                    const rows = match.match(/<tr>.*?<\/tr>/g);
+                    if (rows && rows.length > 1) {
+                        return `<table style="width: 100%; border-collapse: collapse; margin: 15px 0; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">${rows.join('')}</table>`;
+                    } else if (rows && rows.length === 1) {
+                        return `<table style="width: 100%; border-collapse: collapse; margin: 15px 0; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">${rows[0]}</table>`;
+                    }
+                    return match;
+                });
+                
+                // Style header rows (first row of each table)
+                formatted = formatted.replace(/(<table[^>]*>)(<tr>)/g, '$1<thead>$2');
+                formatted = formatted.replace(/(<\/tr>)(<tr>)/g, '$1</thead><tbody>$2');
+                formatted = formatted.replace(/(<\/tr>)(<\/table>)/g, '$1</tbody>$2');
+                
+                // Apply header styling
+                formatted = formatted.replace(/<thead><tr>(.*?)<\/tr><\/thead>/gs, function(match, content) {
+                    const headerCells = content.replace(/<td/g, '<th style="padding: 12px; background: #667eea; color: white; font-weight: 600; border: 1px solid #5a6fd8; text-align: left; vertical-align: top;"');
+                    return `<thead><tr>${headerCells}</tr></thead>`;
+                });
+                
+                // Line breaks
+                formatted = formatted.replace(/\n/g, '<br>');
+                
+                // Clean up multiple consecutive line breaks
+                formatted = formatted.replace(/<br><br><br>/g, '<br><br>');
+                
+                // Add spacing around lists and headers
+                formatted = formatted.replace(/(<div[^>]*>)/g, '<br>$1');
+                formatted = formatted.replace(/(<\/div>)/g, '$1<br>');
+                formatted = formatted.replace(/(<h[234][^>]*>)/g, '<br>$1');
+                formatted = formatted.replace(/(<\/h[234]>)/g, '$1<br>');
+                
+                // Clean up excessive line breaks
+                formatted = formatted.replace(/<br><br><br>/g, '<br><br>');
+                formatted = formatted.replace(/<br><br><br>/g, '<br><br>');
+                
+                return formatted;
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            formatTimestamp(timestamp) {
+                if (!timestamp) return '';
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString();
+            }
+
+            scrollToBottom() {
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+                this.updateScrollButton();
+            }
+
+            updateScrollButton() {
+                const isAtBottom = this.chatMessages.scrollTop + this.chatMessages.clientHeight >= this.chatMessages.scrollHeight - 10;
+                this.scrollButton.style.display = isAtBottom ? 'none' : 'flex';
+            }
+        }
+
+        // Global functions for command buttons
+        function sendCommand(command) {
+            if (window.chatbotClient) {
+                window.chatbotClient.sendCommand(command);
+            }
+        }
+
+        function scrollToBottom() {
+            if (window.chatbotClient) {
+                window.chatbotClient.scrollToBottom();
+            }
+        }
+
+        // Initialize chatbot when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.chatbotClient = new ChatbotClient();
+        });
+    </script>
+</body>
+</html> 
